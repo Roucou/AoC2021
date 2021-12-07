@@ -56,7 +56,7 @@ class Simulation {
 
 	void run(int days) {
 		while (_day <= days) {
-			vector<Lanternfish> new_fishes;
+			vector<Lanternfish> new_fishes; // See "Note 1"
 			for (Lanternfish& fish: _fishes) {
 				fish.nextDay(new_fishes);
 			}
@@ -85,27 +85,42 @@ class Simulation {
 
 int main(int argc, char *argv[]) {
 	// First command line argument is the file to open
-	if (argc != 2) {
-		cout << "Usage: day6a <input.txt>" << endl;
+	// Second command line argument is the number of days to simulate
+	if (argc != 3) {
+		cout << "Usage: day6a <input.txt> <days>" << endl;
 		return -1;
 	}
+	string path = argv[1];
+	int days = stoi(argv[2]);
 
 	// Open file
-	string path = argv[1];
-	ifstream file(path);
-
-	// Read file
 	string str;
+	ifstream file(path);
 	getline(file, str);
 
 	// And go!
 	Simulation sim(str);
-	sim.run(18);
-	//sim.run(80);
-	//sim.run(256);
+	sim.run(days);
 	int answer = sim.countFishes();
 	cout << "Answer: " << to_string(answer) << endl;
 
 	return 0;
 }
 
+/*
+Note 1
+------
+Don't add elements to a vector while iterating over it!
+
+A vector manages its own storage. If its internal storage is exhausted,
+the vector will do an internal restructure. During this restructure the
+memory addresses of existing elements can (read: will) change. This will
+mess up the current iterator.
+
+So either keep new elements in a temporary vector and add the contents
+of that vector to the original vector after you have finished iterating.
+
+Or, if you know the maximum required capacity beforehand, reserve this
+capacity using this method: v.reserve(n), where n is the number of elements
+to reserve. But then you probably are using the wrong type of container. ;-)
+*/

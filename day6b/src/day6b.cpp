@@ -71,24 +71,22 @@ class Simulation {
 
 int main(int argc, char *argv[]) {
 	// First command line argument is the file to open
-	if (argc != 2) {
-		cout << "Usage: day6b <input.txt>" << endl;
+	// Second command line argument is the number of days to simulate
+	if (argc != 3) {
+		cout << "Usage: day6a <input.txt> <days>" << endl;
 		return -1;
 	}
+	string path = argv[1];
+	int days = stoi(argv[2]);
 
 	// Open file
-	string path = argv[1];
-	ifstream file(path);
-
-	// Read file
 	string str;
+	ifstream file(path);
 	getline(file, str);
 
 	// And go!
 	Simulation sim(str);
-	//sim.run(18);
-	//sim.run(80);
-	sim.run(256);
+	sim.run(days);
 	unsigned long answer = sim.countFishes();
 	cout << "Answer: " << to_string(answer) << endl;
 
