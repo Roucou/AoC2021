@@ -15,6 +15,7 @@ struct Point {
 
 class Heightmap {
 	array<array<int, 100>, 100> heightmap;
+	array<array<bool, 100>, 100> mapped;
 	int map_width;
 	int map_height;
 	vector<Point> low_points;
@@ -23,7 +24,7 @@ class Heightmap {
 	void parse(vector<string> &input) {
 		int row = 0;
 		for (auto &str: input) {
-			map_width = str.length();
+			this->map_width = str.length();
 			for (size_t i = 0; i < str.length(); i++) {
 				char c = str[i];
 				int height = c - '0';
@@ -31,8 +32,8 @@ class Heightmap {
 			}
 			row++;
 		}
-		map_height = row;
-		cout << "Map dimensions: " << to_string(map_width) << "x" << to_string(map_height) << endl;
+		this->map_height = row;
+		cout << "Map dimensions: " << to_string(this->map_width) << "x" << to_string(this->map_height) << endl;
 	}
 
 	bool isLowPoint(int col, int row) {
@@ -65,66 +66,61 @@ class Heightmap {
 		vector<Point> neighbours;
 		int col = p.col;
 		int row = p.row;
-		int height = p.height + 1;
+		int height = p.height;
 
-		if (height < 9) {
-			// Top
-			if ((row > 0) && (this->heightmap[row - 1][col] == height)) {
-				Point pp;
-				pp.col = col;
-				pp.row = row - 1;
-				pp.height = height;
-				neighbours.push_back(pp);
-			}
+		// Top
+		if ((row > 0) &&
+			!this->mapped[row - 1][col] &&
+			(this->heightmap[row - 1][col] >= height) &&
+			(this->heightmap[row - 1][col] < 9)) {
+			Point pp;
+			pp.col = col;
+			pp.row = row - 1;
+			pp.height = this->heightmap[row - 1][col];
+			this->mapped[row - 1][col] = true;
+			neighbours.push_back(pp);
+		}
 
-			// Left
-			if ((col > 0) && (this->heightmap[row][col - 1] == height)) {
-				Point pp;
-				pp.col = col - 1;
-				pp.row = row;
-				pp.height = height;
-				neighbours.push_back(pp);
-			}
+		// Left
+		if ((col > 0) &&
+			!this->mapped[row][col - 1] &&
+			(this->heightmap[row][col - 1] >= height) &&
+			(this->heightmap[row][col - 1] < 9)) {
+			Point pp;
+			pp.col = col - 1;
+			pp.row = row;
+			pp.height = this->heightmap[row][col - 1];
+			this->mapped[row][col - 1] = true;
+			neighbours.push_back(pp);
+		}
 
-			// Right
-			if (((col + 1) < this->map_width) && (this->heightmap[row][col + 1] == height)) {
-				Point pp;
-				pp.col = col + 1;
-				pp.row = row;
-				pp.height = height;
-				neighbours.push_back(pp);
-			}
+		// Right
+		if (((col + 1) < this->map_width) &&
+			!this->mapped[row][col + 1] &&
+			(this->heightmap[row][col + 1] >= height) &&
+			(this->heightmap[row][col + 1] < 9)) {
+			Point pp;
+			pp.col = col + 1;
+			pp.row = row;
+			pp.height = this->heightmap[row][col + 1];
+			this->mapped[row][col + 1] = true;
+			neighbours.push_back(pp);
+		}
 
-			// Bottom
-			if (((row + 1) < this->map_height) && (this->heightmap[row + 1][col] == height)) {
-				Point pp;
-				pp.col = col;
-				pp.row = row + 1;
-				pp.height = height;
-				neighbours.push_back(pp);
-			}
+		// Bottom
+		if (((row + 1) < this->map_height) &&
+			!this->mapped[row + 1][col] &&
+			(this->heightmap[row + 1][col] >= height) &&
+			(this->heightmap[row + 1][col] < 9)) {
+			Point pp;
+			pp.col = col;
+			pp.row = row + 1;
+			pp.height = this->heightmap[row + 1][col];
+			this->mapped[row + 1][col] = true;
+			neighbours.push_back(pp);
 		}
 
 		return neighbours;
-	}
-
-	vector<Point> deduplicate(vector<Point> &neighbours) {
-		vector<Point> deduped;
-		for (size_t i = 0; i < neighbours.size(); i++) {
-			Point p = neighbours[i];
-			bool found_duplicate = false;
-			for (size_t j = i + 1; j < neighbours.size(); j++) {
-				Point pp = neighbours[j];
-				if ((p.col == pp.col) && (p.row == pp.row)) {
-					found_duplicate = true;
-					break;
-				}
-			}
-			if (!found_duplicate) {
-				deduped.push_back(p);
-			}
-		}
-		return deduped;
 	}
 
 	vector<Point> findNeighbours(vector<Point> &neighbours) {
@@ -139,6 +135,11 @@ class Heightmap {
 	}
 
 	void findBasins() {
+		for (size_t row = 0; row < this->map_height; row++) {
+			for (size_t col = 0; col < this->map_width; col++) {
+				this->mapped[row][col] = false;
+			}
+		}
 		for (auto &p: this->low_points) {
 			cout << "Find neighbours for point " << to_string(p.col) << ',' << to_string(p.row) << endl;
 			vector<Point> neighbours;
@@ -150,7 +151,6 @@ class Heightmap {
 				}
 				new_neighbours = findNeighbours(new_neighbours);
 			}
-			neighbours = deduplicate(neighbours);
 			this->basins.push_back(neighbours.size());
 			cout << "Basis with size " << to_string(neighbours.size()) << endl;
 		}
